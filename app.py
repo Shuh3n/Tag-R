@@ -3,7 +3,6 @@ from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import shutil
 import zipfile
-import rarfile
 import cv2
 import numpy as np
 from pathlib import Path
@@ -80,18 +79,13 @@ def get_face_embedding(img_path):
     faces = face_app.get(img)
     return faces[0].embedding if faces else None
 
-def extract_archive(file_path, extract_to):
-    file_path = Path(file_path)
-    logger.info(f"Extrayendo {file_path} a {extract_to}")
+# Asegúrate de que extract_archive solo use zipfile:
+def extract_archive(archive_path: Path, extract_to: Path):
+    """Extrae archivos ZIP"""
+    logger.info(f"Extrayendo {archive_path} a {extract_to}")
     
-    if file_path.suffix.lower() == '.zip':
-        with zipfile.ZipFile(file_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_to)
-    elif file_path.suffix.lower() in ['.rar', '.cbr']:
-        with rarfile.RarFile(file_path, 'r') as rar_ref:
-            rar_ref.extractall(extract_to)
-    else:
-        raise ValueError("Formato no soportado. Usa ZIP o RAR")
+    with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_to)
     
     logger.info("Extracción completada")
 
@@ -279,6 +273,10 @@ async def process_archive(
     contents = await file.read()
     if len(contents) > MAX_SIZE:
         raise HTTPException(400, f"Archivo demasiado grande. Máximo: 1GB")
+    
+    # Validar formato (ZIP o RAR)
+    if not file.filename.lower().endswith(('.zip', '.rar')):
+        raise HTTPException(400, "Solo se aceptan archivos ZIP o RAR")
     
     # Si no hay session_id, generar uno nuevo
     if not session_id:

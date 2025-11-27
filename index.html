@@ -13,7 +13,7 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3E2723 0%, #2a1a13 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -29,7 +29,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(102, 126, 234, 0.95);
+            background: rgba(62, 39, 35, 0.95);
             display: none;
             align-items: center;
             justify-content: center;
@@ -43,7 +43,7 @@
         
         .drag-message {
             text-align: center;
-            color: white;
+            color: #FFEDAC;
             animation: bounce 1s infinite;
         }
         
@@ -63,14 +63,15 @@
         }
         
         .container {
-            background: white;
+            background: #FFEDAC;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(62, 39, 35, 0.5);
             max-width: 600px;
             width: 100%;
             padding: 40px;
             position: relative;
             z-index: 1;
+            border: 3px solid #3E2723;
         }
         
         .header {
@@ -80,32 +81,34 @@
         
         .header h1 {
             font-size: 2.5em;
-            color: #667eea;
+            color: #3E2723;
             margin-bottom: 10px;
         }
         
         .header p {
-            color: #7f8c8d;
+            color: #6d4c41;
         }
         
         .upload-area {
-            border: 3px dashed #667eea;
+            border: 3px dashed #3E2723;
             border-radius: 15px;
             padding: 40px;
             text-align: center;
             transition: all 0.3s;
             cursor: pointer;
             margin-bottom: 20px;
+            background: #fffbe6;
         }
         
         .upload-area:hover {
-            background: #f8f9ff;
-            border-color: #5568d3;
+            background: #fff8e1;
+            border-color: #6d4c41;
+            transform: translateY(-2px);
         }
         
         .upload-area.has-file {
-            border-color: #10ac84;
-            background: #f0fff9;
+            border-color: #3E2723;
+            background: #fffbe6;
         }
         
         .upload-icon {
@@ -124,7 +127,7 @@
         .slider-container label {
             display: block;
             margin-bottom: 10px;
-            color: #2c3e50;
+            color: #3E2723;
             font-weight: 600;
         }
         
@@ -132,7 +135,7 @@
             width: 100%;
             height: 8px;
             border-radius: 5px;
-            background: #ecf0f1;
+            background: #e0e0e0;
             outline: none;
         }
         
@@ -141,14 +144,23 @@
             width: 20px;
             height: 20px;
             border-radius: 50%;
-            background: #667eea;
+            background: #3E2723;
             cursor: pointer;
+        }
+        
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3E2723;
+            cursor: pointer;
+            border: none;
         }
         
         .threshold-value {
             display: inline-block;
-            background: #667eea;
-            color: white;
+            background: #3E2723;
+            color: #FFEDAC;
             padding: 5px 15px;
             border-radius: 20px;
             font-weight: bold;
@@ -158,30 +170,40 @@
         button {
             width: 100%;
             padding: 15px;
-            background: linear-gradient(135deg, #10ac84 0%, #0e9470 100%);
-            color: white;
+            background: linear-gradient(135deg, #3E2723 0%, #6d4c41 100%);
+            color: #FFEDAC;
             border: none;
             border-radius: 10px;
             font-size: 1.1em;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(62, 39, 35, 0.3);
         }
         
         button:hover:not(:disabled) {
             transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(62, 39, 35, 0.5);
         }
         
         button:disabled {
-            background: #95a5a6;
+            background: #bdbdbd;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
+            color: #fff;
         }
         
         .download-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #3E2723 0%, #2a1a13 100%);
             margin-top: 15px;
             display: none;
+            box-shadow: 0 4px 15px rgba(62, 39, 35, 0.3);
+            color: #FFEDAC;
+        }
+        
+        .download-btn:hover:not(:disabled) {
+            box-shadow: 0 6px 20px rgba(62, 39, 35, 0.5);
         }
         
         .download-btn.active {
@@ -201,19 +223,19 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 10px;
-            color: #2c3e50;
+            color: #3E2723;
             font-size: 0.9em;
         }
         
         .progress-percentage {
             font-weight: bold;
-            color: #667eea;
+            color: #3E2723;
         }
         
         .progress-bar {
             width: 100%;
             height: 12px;
-            background: #ecf0f1;
+            background: #e0e0e0;
             border-radius: 10px;
             overflow: hidden;
             position: relative;
@@ -221,7 +243,7 @@
         
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea, #764ba2);
+            background: linear-gradient(90deg, #FFEDAC, #ffe3a1);
             width: 0%;
             transition: width 0.3s ease;
             position: relative;
@@ -237,7 +259,7 @@
             background: linear-gradient(
                 90deg,
                 transparent,
-                rgba(255, 255, 255, 0.3),
+                rgba(62, 39, 35, 0.1),
                 transparent
             );
             animation: shimmer 1.5s infinite;
@@ -256,20 +278,22 @@
         }
         
         .status.success {
-            background: #d4edda;
-            color: #155724;
+            background: #fff8e1;
+            color: #3E2723;
             display: block;
+            border-left: 4px solid #FFEDAC;
         }
         
         .status.error {
-            background: #f8d7da;
-            color: #721c24;
+            background: #ffebee;
+            color: #6d4c41;
             display: block;
+            border-left: 4px solid #6d4c41;
         }
         
         .instructions {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
+            background: #fffbe6;
+            border-left: 4px solid #3E2723;
             padding: 15px;
             margin-top: 20px;
             border-radius: 5px;
@@ -278,11 +302,12 @@
         
         .instructions h3 {
             margin-bottom: 10px;
-            color: #856404;
+            color: #3E2723;
         }
         
         .instructions ul {
             margin-left: 20px;
+            color: #6d4c41;
         }
         
         .stats-container {
@@ -300,12 +325,12 @@
         }
         
         .stats-header h3 {
-            color: #2c3e50;
+            color: #3E2723;
             margin-bottom: 5px;
         }
         
         .stats-header p {
-            color: #7f8c8d;
+            color: #6d4c41;
             font-size: 0.9em;
         }
         
@@ -316,19 +341,21 @@
         }
         
         .stat-card {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            background: linear-gradient(135deg, #3E2723, #2a1a13);
+            color: #FFEDAC;
             padding: 20px;
             border-radius: 12px;
             text-align: center;
             animation: fadeIn 0.5s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-            transition: transform 0.2s;
+            box-shadow: 0 4px 15px rgba(62, 39, 35, 0.3);
+            transition: all 0.3s;
+            border: 2px solid transparent;
         }
         
         .stat-card:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(62, 39, 35, 0.5);
+            border-color: #FFEDAC;
         }
         
         @keyframes fadeIn {
@@ -347,12 +374,14 @@
             opacity: 0.95;
             text-transform: capitalize;
             word-break: break-word;
+            color: #FFEDAC;
         }
         
         .stat-card .number {
             font-size: 2.2em;
             font-weight: bold;
             line-height: 1;
+            color: #FFEDAC;
         }
         
         .phase-indicator {
@@ -372,21 +401,21 @@
             padding: 10px;
             border-radius: 8px;
             margin: 0 5px;
-            background: #ecf0f1;
-            color: #7f8c8d;
+            background: #ffe3a1;
+            color: #3E2723;
             font-size: 0.85em;
             transition: all 0.3s;
         }
         
         .phase.active {
-            background: #667eea;
-            color: white;
+            background: #3E2723;
+            color: #FFEDAC;
             transform: scale(1.05);
         }
         
         .phase.completed {
-            background: #10ac84;
-            color: white;
+            background: #6d4c41;
+            color: #FFEDAC;
         }
     </style>
 </head>
@@ -409,11 +438,11 @@
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon" id="uploadIcon">📦</div>
             <h3 id="uploadTitle">Arrastra tu archivo ZIP aquí</h3>
-            <p style="color: #95a5a6; margin-top: 10px;">o haz clic para seleccionar</p>
+            <p style="color: #6d4c41; margin-top: 10px;">o haz clic para seleccionar</p>
             <input type="file" id="fileInput" accept=".zip">
         </div>
         
-        <div id="fileName" style="text-align: center; color: #10ac84; font-weight: bold; margin-bottom: 15px; display: none;"></div>
+        <div id="fileName" style="text-align: center; color: #3E2723; font-weight: bold; margin-bottom: 15px; display: none;"></div>
         
         <div class="slider-container">
             <label>
@@ -421,7 +450,7 @@
                 <span class="threshold-value" id="thresholdValue">0.40</span>
             </label>
             <input type="range" id="threshold" min="0.2" max="0.7" step="0.05" value="0.4">
-            <p style="color: #7f8c8d; font-size: 0.85em; margin-top: 5px;">
+            <p style="color: #6d4c41; font-size: 0.85em; margin-top: 5px;">
                 ← Más estricto | Más permisivo →
             </p>
         </div>
@@ -521,7 +550,7 @@
         let sessionId = null;
         let dragCounter = 0;
         let downloadBlob = null;
-        let downloadFilename = '';
+        let downloadFilename = "";
         
         // Drag & Drop GLOBAL
         document.addEventListener('dragenter', (e) => {
@@ -627,7 +656,6 @@
             statsGrid.innerHTML = '';
             statsContainer.classList.add('active');
             
-            // Calcular total de fotos
             const total = Object.values(stats).reduce((a, b) => a + b, 0);
             totalPhotos.textContent = `Total: ${total} fotos organizadas`;
             
@@ -637,7 +665,6 @@
                 const card = document.createElement('div');
                 card.className = 'stat-card';
                 
-                // Iconos según categoría
                 let icon = '📁';
                 if (category === 'sin_rostros') icon = '❌';
                 else if (category === 'desconocidos') icon = '❓';
@@ -673,8 +700,7 @@
                 return;
             }
             
-            // Validar tamaño (max 1GB)
-            const maxSize = 1024 * 1024 * 1024; // 1GB
+            const maxSize = 1024 * 1024 * 1024;
             if (file.size > maxSize) {
                 showStatus('❌ El archivo es demasiado grande (máx 1GB)', 'error');
                 return;
@@ -682,7 +708,6 @@
             
             selectedFile = file;
             
-            // Actualizar UI
             uploadArea.classList.add('has-file');
             uploadIcon.textContent = '✅';
             uploadTitle.textContent = 'Archivo listo para procesar';
@@ -799,7 +824,6 @@
                 downloadBlob = blob;
                 downloadFilename = `organized_${selectedFile.name.split('.')[0]}.zip`;
                 
-                // Descarga automática
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -810,7 +834,6 @@
                 updateProgress(100, '¡Completado!');
                 showStatus('✅ ¡Proceso completado! Archivo descargado.', 'success');
                 
-                // Mostrar botón de descarga
                 downloadBtn.classList.add('active');
                 
             } catch (error) {
