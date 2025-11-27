@@ -7,13 +7,15 @@ import cv2
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
-from insightface.app import FaceAnalysis
+# NO importes insightface aquí
 from sklearn.metrics.pairwise import cosine_similarity
 import uuid
 import traceback
 import logging
 import asyncio
 import json
+import os
+import gc
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -28,10 +30,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-logger.info("Inicializando modelo de reconocimiento facial...")
-face_app = FaceAnalysis(providers=['CPUExecutionProvider'])
-face_app.prepare(ctx_id=0, det_size=(640, 640))
-logger.info("Modelo inicializado correctamente")
+# CAMBIO PRINCIPAL: Inicialización lazy del modelo
+_face_app = None
+_initializing = False
+
+def get_face_app():
+    """Inicializa el modelo solo cuando se necesita"""
+    global _face_app, _initializing
+    
+    if _face_app is not None:
+        return _face_app
+    
+    if _initializing:
+        raise HTTPException(503, "Modelo inicializándose, inténtalo en 30 segundos")
+    
+    _initializing = True
+    try:
+        logger.info("Inicializando modelo de reconocimiento facial (lazy)...")
+        from insightface.app import FaceAnalysis
+        
+        face_app = FaceAnalysis(providers=['CPUExecutionProvider'])
+        face_app.prepare(ctx_id=-1, det_size=(512, 512))  # ctx_id=-1 para CPU forzado
+        
+        _face_app = face_app
+        logger.info("Modelo inicializado correctamente")
+        return _face_app
+        
+    except Exception as e:
+        logger.error(f"Error inicializando modelo: {e}")
+        logger.error(traceback.format_exc())
+        raise HTTPException(503, f"Error inicializando modelo: {e}")
+    finally:
+        _initializing = False
+        gc.collect()
 
 TEMP_DIR = Path("temp_processing")
 TEMP_DIR.mkdir(exist_ok=True)
@@ -45,39 +76,52 @@ class ConnectionManager:
         await websocket.accept()
         self.active_connections[session_id] = websocket
         logger.info(f"✅ WebSocket conectado: {session_id}")
-        logger.info(f"📊 Conexiones activas: {list(self.active_connections.keys())}")
 
     def disconnect(self, session_id: str):
         if session_id in self.active_connections:
             del self.active_connections[session_id]
             logger.info(f"❌ WebSocket desconectado: {session_id}")
-            logger.info(f"📊 Conexiones activas: {list(self.active_connections.keys())}")
 
     async def send_message(self, session_id: str, message: dict):
-        logger.info(f"📤 Intentando enviar a {session_id}: {message}")
-        logger.info(f"📊 Conexiones disponibles: {list(self.active_connections.keys())}")
-        
         if session_id in self.active_connections:
             try:
                 await self.active_connections[session_id].send_json(message)
-                logger.info(f"✅ Mensaje enviado exitosamente")
             except Exception as e:
-                logger.error(f"❌ Error enviando mensaje: {e}")
-        else:
-            logger.warning(f"⚠️  No hay WebSocket para session_id: {session_id}")
+                logger.error(f"Error enviando mensaje: {e}")
 
 manager = ConnectionManager()
 
 def load_image(path):
     img = cv2.imread(str(path))
-    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB) if img is not None else None
+    if img is None:
+        return None
+    # Redimensiona si es muy grande
+    h, w = img.shape[:2]
+    max_size = 800
+    if max(h, w) > max_size:
+        scale = max_size / max(h, w)
+        new_w, new_h = int(w * scale), int(h * scale)
+        img = cv2.resize(img, (new_w, new_h))
+    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 def get_face_embedding(img_path):
+    """CAMBIO: Usa get_face_app() lazy"""
+    face_app = get_face_app()  # Inicializa solo cuando se necesita
+    
     img = load_image(img_path)
     if img is None:
         return None
-    faces = face_app.get(img)
-    return faces[0].embedding if faces else None
+    
+    try:
+        faces = face_app.get(img)
+        result = faces[0].embedding if faces else None
+        # Libera memoria
+        del img
+        gc.collect()
+        return result
+    except Exception as e:
+        logger.error(f"Error procesando {img_path}: {e}")
+        return None
 
 # Asegúrate de que extract_archive solo use zipfile:
 def extract_archive(archive_path: Path, extract_to: Path):
@@ -96,41 +140,6 @@ def create_zip(source_dir, output_path):
             if file.is_file():
                 zipf.write(file, file.relative_to(source_dir))
     logger.info("ZIP creado exitosamente")
-
-async def load_known_persons(known_dir, session_id):
-    await manager.send_message(session_id, {
-        "type": "status",
-        "message": "📚 Cargando personas conocidas..."
-    })
-    
-    known = {}
-    if not Path(known_dir).exists():
-        return known
-    
-    persons = [d for d in Path(known_dir).iterdir() if d.is_dir()]
-    
-    for i, person_dir in enumerate(persons, 1):
-        await manager.send_message(session_id, {
-            "type": "status",
-            "message": f"Cargando persona {i}/{len(persons)}: {person_dir.name}"
-        })
-        
-        embeddings = []
-        for photo in person_dir.glob("*"):
-            if photo.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}:
-                emb = get_face_embedding(photo)
-                if emb is not None:
-                    embeddings.append(emb)
-        
-        if embeddings:
-            known[person_dir.name] = np.mean(embeddings, axis=0)
-            await manager.send_message(session_id, {
-                "type": "person_loaded",
-                "name": person_dir.name,
-                "photos": len(embeddings)
-            })
-    
-    return known
 
 def find_best_match(embedding, known_persons, threshold=0.4):
     if not known_persons or embedding is None:
@@ -159,12 +168,10 @@ async def process_photos(work_dir, threshold, session_id):
     
     output_dir.mkdir(exist_ok=True)
     
-    # Cargar personas
     await manager.send_message(session_id, {
         "type": "status",
         "message": "📚 Cargando personas conocidas..."
     })
-    await asyncio.sleep(0.1)  # Dar tiempo para que se envíe
     
     known_persons = {}
     if Path(known_dir).exists():
@@ -180,6 +187,9 @@ async def process_photos(work_dir, threshold, session_id):
             
             if embeddings:
                 known_persons[person_dir.name] = np.mean(embeddings, axis=0)
+            
+            # Libera memoria entre personas
+            gc.collect()
     
     if not known_persons:
         raise ValueError("No se encontraron personas con rostros válidos en known_faces")
@@ -188,9 +198,7 @@ async def process_photos(work_dir, threshold, session_id):
         "type": "status",
         "message": f"✅ {len(known_persons)} personas cargadas"
     })
-    await asyncio.sleep(0.1)
     
-    # Buscar fotos
     photos = [p for p in input_dir.rglob("*") 
              if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}]
     
@@ -199,13 +207,9 @@ async def process_photos(work_dir, threshold, session_id):
         "type": "total_photos",
         "total": total
     })
-    await asyncio.sleep(0.1)
     
     stats = defaultdict(int)
-    
-    # OPTIMIZACIÓN: Enviar actualizaciones cada 10 fotos o cada 5%
     update_interval = max(1, min(10, total // 20))
-    last_update_time = asyncio.get_event_loop().time()
     
     for i, photo in enumerate(photos, 1):
         embedding = get_face_embedding(photo)
@@ -229,24 +233,18 @@ async def process_photos(work_dir, threshold, session_id):
         
         shutil.copy2(photo, dest)
         
-        # Enviar actualización y dar tiempo para que se procese
-        current_time = asyncio.get_event_loop().time()
-        should_update = (
-            i % update_interval == 0 or
-            i == total or
-            (current_time - last_update_time) >= 1.0
-        )
-        
-        if should_update:
+        if i % update_interval == 0 or i == total:
             await manager.send_message(session_id, {
                 "type": "processing",
                 "current": i,
                 "total": total,
                 "progress": int((i / total) * 100)
             })
-            last_update_time = current_time
-            # Dar tiempo para que el mensaje se envíe antes de continuar
             await asyncio.sleep(0.05)
+        
+        # Libera memoria cada 50 fotos
+        if i % 50 == 0:
+            gc.collect()
     
     return stats
 
@@ -256,7 +254,6 @@ async def websocket_endpoint(websocket: WebSocket, session_id: str):
     try:
         while True:
             data = await websocket.receive_text()
-            # Mantener conexión viva
     except WebSocketDisconnect:
         manager.disconnect(session_id)
 
@@ -266,53 +263,38 @@ async def process_archive(
     threshold: float = 0.4,
     session_id: str = None
 ):
-    # Validar tamaño del archivo (1GB máximo)
     MAX_SIZE = 1024 * 1024 * 1024  # 1GB
     
-    # Leer contenido
     contents = await file.read()
     if len(contents) > MAX_SIZE:
         raise HTTPException(400, f"Archivo demasiado grande. Máximo: 1GB")
     
-    # Validar formato (ZIP o RAR)
-    if not file.filename.lower().endswith(('.zip', '.rar')):
-        raise HTTPException(400, "Solo se aceptan archivos ZIP o RAR")
+    if not file.filename.lower().endswith('.zip'):
+        raise HTTPException(400, "Solo se aceptan archivos ZIP")
     
-    # Si no hay session_id, generar uno nuevo
     if not session_id:
         session_id = str(uuid.uuid4())
     
     work_dir = TEMP_DIR / session_id
     work_dir.mkdir(parents=True, exist_ok=True)
     
-    logger.info(f"Nueva petición - Session: {session_id}")
-    
     try:
-        # Guardar archivo
         upload_path = work_dir / file.filename
         with open(upload_path, "wb") as buffer:
             buffer.write(contents)
-        
-        logger.info(f"Archivo guardado, enviando mensaje WebSocket a {session_id}")
         
         await manager.send_message(session_id, {
             "type": "status",
             "message": "📦 Extrayendo archivo..."
         })
         
-        # Dar tiempo para que el mensaje se envíe
-        await asyncio.sleep(0.2)
-        
-        # Extraer
         extract_archive(upload_path, work_dir)
         
-        # Validar estructura
         if not (work_dir / "known_faces").exists():
             raise HTTPException(400, "Falta carpeta 'known_faces'")
         if not (work_dir / "input_photos").exists():
             raise HTTPException(400, "Falta carpeta 'input_photos'")
         
-        # Procesar con WebSocket
         stats = await process_photos(work_dir, threshold, session_id)
         
         await manager.send_message(session_id, {
@@ -320,9 +302,6 @@ async def process_archive(
             "message": "📦 Creando archivo ZIP..."
         })
         
-        await asyncio.sleep(0.2)
-        
-        # Crear ZIP
         output_zip = work_dir / "organized_photos.zip"
         create_zip(work_dir / "organized", output_zip)
         
@@ -331,16 +310,10 @@ async def process_archive(
             "stats": dict(stats)
         })
         
-        await asyncio.sleep(0.1)
-        
         return FileResponse(
             path=output_zip,
             filename=f"organized_{file.filename.rsplit('.', 1)[0]}.zip",
-            media_type="application/zip",
-            headers={
-                "X-Session-Id": session_id,
-                "X-Process-Stats": str(dict(stats))
-            }
+            media_type="application/zip"
         )
     
     except Exception as e:
@@ -352,20 +325,15 @@ async def process_archive(
         })
         raise HTTPException(500, f"Error: {str(e)}")
     finally:
-        # Limpiar después de un tiempo
-        # shutil.rmtree(work_dir, ignore_errors=True)
-        pass
+        try:
+            shutil.rmtree(work_dir, ignore_errors=True)
+        except:
+            pass
+        gc.collect()
 
 @app.get("/")
 async def root():
-    return {
-        "message": "Face Organizer API",
-        "endpoints": {
-            "/process": "POST - Sube ZIP/RAR",
-            "/ws/{session_id}": "WebSocket - Progreso en tiempo real",
-            "/docs": "Documentación"
-        }
-    }
+    return {"message": "Face Organizer API"}
 
 if __name__ == "__main__":
     import uvicorn
