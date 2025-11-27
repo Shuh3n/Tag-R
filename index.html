@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Organizer Web</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Overlay para drag & drop global */
+        .drag-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+        
+        .drag-overlay.active {
+            display: flex;
+        }
+        
+        .drag-message {
+            text-align: center;
+            color: white;
+            animation: bounce 1s infinite;
+        }
+        
+        .drag-message .icon {
+            font-size: 6em;
+            margin-bottom: 20px;
+        }
+        
+        .drag-message h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #7f8c8d;
+        }
+        
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            background: #f8f9ff;
+            border-color: #5568d3;
+        }
+        
+        .upload-area.has-file {
+            border-color: #10ac84;
+            background: #f0fff9;
+        }
+        
+        .upload-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+        }
+        
+        input[type="file"] {
+            display: none;
+        }
+        
+        .slider-container {
+            margin: 20px 0;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ecf0f1;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+        }
+        
+        .threshold-value {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #10ac84 0%, #0e9470 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .download-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .download-btn.active {
+            display: block;
+        }
+        
+        .progress {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .progress.active {
+            display: block;
+        }
+        
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            color: #2c3e50;
+            font-size: 0.9em;
+        }
+        
+        .progress-percentage {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.3),
+                transparent
+            );
+            animation: shimmer 1.5s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            display: block;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            display: block;
+        }
+        
+        .instructions {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+        
+        .instructions h3 {
+            margin-bottom: 10px;
+            color: #856404;
+        }
+        
+        .instructions ul {
+            margin-left: 20px;
+        }
+        
+        .stats-container {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .stats-container.active {
+            display: block;
+        }
+        
+        .stats-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .stats-header h3 {
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .stats-header p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 12px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            animation: fadeIn 0.5s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .stat-card .icon {
+            font-size: 2em;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card h4 {
+            font-size: 0.85em;
+            margin-bottom: 8px;
+            opacity: 0.95;
+            text-transform: capitalize;
+            word-break: break-word;
+        }
+        
+        .stat-card .number {
+            font-size: 2.2em;
+            font-weight: bold;
+            line-height: 1;
+        }
+        
+        .phase-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .phase-indicator.active {
+            display: flex;
+        }
+        
+        .phase {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 0 5px;
+            background: #ecf0f1;
+            color: #7f8c8d;
+            font-size: 0.85em;
+            transition: all 0.3s;
+        }
+        
+        .phase.active {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+        
+        .phase.completed {
+            background: #10ac84;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Overlay para drag & drop -->
+    <div class="drag-overlay" id="dragOverlay">
+        <div class="drag-message">
+            <div class="icon">📦</div>
+            <h2>Suelta tu archivo ZIP aquí</h2>
+            <p>Solo archivos .zip</p>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎭 Face Organizer</h1>
+            <p>Organiza tus fotos automáticamente con IA</p>
+        </div>
+        
+        <div class="upload-area" id="uploadArea">
+            <div class="upload-icon" id="uploadIcon">📦</div>
+            <h3 id="uploadTitle">Arrastra tu archivo ZIP aquí</h3>
+            <p style="color: #95a5a6; margin-top: 10px;">o haz clic para seleccionar</p>
+            <input type="file" id="fileInput" accept=".zip">
+        </div>
+        
+        <div id="fileName" style="text-align: center; color: #10ac84; font-weight: bold; margin-bottom: 15px; display: none;"></div>
+        
+        <div class="slider-container">
+            <label>
+                Umbral de similitud 
+                <span class="threshold-value" id="thresholdValue">0.40</span>
+            </label>
+            <input type="range" id="threshold" min="0.2" max="0.7" step="0.05" value="0.4">
+            <p style="color: #7f8c8d; font-size: 0.85em; margin-top: 5px;">
+                ← Más estricto | Más permisivo →
+            </p>
+        </div>
+        
+        <button id="processBtn" disabled>🚀 PROCESAR FOTOS</button>
+        
+        <!-- Indicador de fases -->
+        <div class="phase-indicator" id="phaseIndicator">
+            <div class="phase" id="phase1">
+                <div>📤</div>
+                <div>Subiendo</div>
+            </div>
+            <div class="phase" id="phase2">
+                <div>🔍</div>
+                <div>Procesando</div>
+            </div>
+            <div class="phase" id="phase3">
+                <div>📦</div>
+                <div>Empaquetando</div>
+            </div>
+            <div class="phase" id="phase4">
+                <div>📥</div>
+                <div>Descargando</div>
+            </div>
+        </div>
+        
+        <div class="progress" id="progress">
+            <div class="progress-info">
+                <span id="progressText">Esperando...</span>
+                <span class="progress-percentage" id="progressPercentage">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+        </div>
+        
+        <!-- Botón de descarga -->
+        <button class="download-btn" id="downloadBtn">
+            📥 DESCARGAR ARCHIVO ORGANIZADO
+        </button>
+        
+        <!-- Estadísticas -->
+        <div class="stats-container" id="statsContainer">
+            <div class="stats-header">
+                <h3>📊 Resultados del Procesamiento</h3>
+                <p id="totalPhotos"></p>
+            </div>
+            <div class="stats-grid" id="statsGrid"></div>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="instructions">
+            <h3>📋 Estructura del archivo:</h3>
+            <ul>
+                <li><strong>known_faces/</strong> - Carpeta con subcarpetas por persona</li>
+                <li><strong>input_photos/</strong> - Fotos a organizar</li>
+            </ul>
+            <p style="margin-top: 10px;">
+                <strong>⚠️ Usa formato ZIP</strong><br><br>
+                <strong>Ejemplo:</strong><br>
+                📦 mi_archivo.zip<br>
+                ├── 📁 known_faces/<br>
+                │   ├── 📁 Juan/ (fotos de Juan)<br>
+                │   └── 📁 Maria/ (fotos de Maria)<br>
+                └── 📁 input_photos/ (fotos a organizar)
+            </p>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://localhost:8000';
+        const WS_URL = 'ws://localhost:8000';
+        
+        const dragOverlay = document.getElementById('dragOverlay');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadIcon = document.getElementById('uploadIcon');
+        const uploadTitle = document.getElementById('uploadTitle');
+        const fileInput = document.getElementById('fileInput');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const threshold = document.getElementById('threshold');
+        const thresholdValue = document.getElementById('thresholdValue');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const status = document.getElementById('status');
+        const fileName = document.getElementById('fileName');
+        const statsContainer = document.getElementById('statsContainer');
+        const statsGrid = document.getElementById('statsGrid');
+        const totalPhotos = document.getElementById('totalPhotos');
+        const phaseIndicator = document.getElementById('phaseIndicator');
+        
+        let selectedFile = null;
+        let websocket = null;
+        let sessionId = null;
+        let dragCounter = 0;
+        let downloadBlob = null;
+        let downloadFilename = '';
+        
+        // Drag & Drop GLOBAL
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            if (dragCounter === 1) {
+                dragOverlay.classList.add('active');
+            }
+        });
+        
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) {
+                dragOverlay.classList.remove('active');
+            }
+        });
+        
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+        
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            dragOverlay.classList.remove('active');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        function generateSessionId() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+        
+        function updatePhase(phaseNumber) {
+            const phases = [
+                document.getElementById('phase1'),
+                document.getElementById('phase2'),
+                document.getElementById('phase3'),
+                document.getElementById('phase4')
+            ];
+            
+            phases.forEach((phase, index) => {
+                if (index < phaseNumber - 1) {
+                    phase.className = 'phase completed';
+                } else if (index === phaseNumber - 1) {
+                    phase.className = 'phase active';
+                } else {
+                    phase.className = 'phase';
+                }
+            });
+        }
+        
+        function updateProgress(percent, message) {
+            progressFill.style.width = `${percent}%`;
+            progressPercentage.textContent = `${Math.round(percent)}%`;
+            progressText.textContent = message;
+        }
+    
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'status':
+                    if (data.message.includes('Extrayendo')) {
+                        updatePhase(2);
+                        updateProgress(20, 'Extrayendo archivo...');
+                    } else if (data.message.includes('Cargando personas')) {
+                        updateProgress(30, 'Cargando personas conocidas...');
+                    } else if (data.message.includes('Creando')) {
+                        updatePhase(3);
+                        updateProgress(90, 'Empaquetando resultados...');
+                    }
+                    break;
+                    
+                case 'total_photos':
+                    updateProgress(40, `Procesando ${data.total} fotos...`);
+                    break;
+                    
+                case 'processing':
+                    const processingProgress = 40 + (data.progress * 0.45);
+                    updateProgress(processingProgress, `Procesando foto ${data.current}/${data.total}`);
+                    break;
+                    
+                case 'completed':
+                    updatePhase(4);
+                    showStats(data.stats);
+                    break;
+                    
+                case 'error':
+                    showStatus(`❌ Error: ${data.message}`, 'error');
+                    resetUI();
+                    break;
+            }
+        }
+        
+        function showStats(stats) {
+            statsGrid.innerHTML = '';
+            statsContainer.classList.add('active');
+            
+            // Calcular total de fotos
+            const total = Object.values(stats).reduce((a, b) => a + b, 0);
+            totalPhotos.textContent = `Total: ${total} fotos organizadas`;
+            
+            const sortedStats = Object.entries(stats).sort((a, b) => b[1] - a[1]);
+            
+            for (const [category, count] of sortedStats) {
+                const card = document.createElement('div');
+                card.className = 'stat-card';
+                
+                // Iconos según categoría
+                let icon = '📁';
+                if (category === 'sin_rostros') icon = '❌';
+                else if (category === 'desconocidos') icon = '❓';
+                else icon = '✅';
+                
+                card.innerHTML = `
+                    <div class="icon">${icon}</div>
+                    <h4>${category.replace(/_/g, ' ')}</h4>
+                    <div class="number">${count}</div>
+                `;
+                statsGrid.appendChild(card);
+            }
+        }
+        
+        function resetUI() {
+            progress.classList.remove('active');
+            phaseIndicator.classList.remove('active');
+            processBtn.disabled = false;
+            updateProgress(0, 'Esperando...');
+        }
+        
+        uploadArea.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.zip')) {
+                showStatus('❌ Solo se aceptan archivos ZIP', 'error');
+                return;
+            }
+            
+            // Validar tamaño (max 1GB)
+            const maxSize = 1024 * 1024 * 1024; // 1GB
+            if (file.size > maxSize) {
+                showStatus('❌ El archivo es demasiado grande (máx 1GB)', 'error');
+                return;
+            }
+            
+            selectedFile = file;
+            
+            // Actualizar UI
+            uploadArea.classList.add('has-file');
+            uploadIcon.textContent = '✅';
+            uploadTitle.textContent = 'Archivo listo para procesar';
+            
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileName.textContent = `📦 ${file.name} (${sizeInMB} MB)`;
+            fileName.style.display = 'block';
+            
+            processBtn.disabled = false;
+            status.style.display = 'none';
+            statsContainer.classList.remove('active');
+            downloadBtn.classList.remove('active');
+        }
+        
+        threshold.addEventListener('input', (e) => {
+            thresholdValue.textContent = parseFloat(e.target.value).toFixed(2);
+        });
+        
+        downloadBtn.addEventListener('click', () => {
+            if (downloadBlob) {
+                const url = window.URL.createObjectURL(downloadBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = downloadFilename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showStatus('✅ Descarga iniciada', 'success');
+            }
+        });
+        
+        processBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            
+            processBtn.disabled = true;
+            progress.classList.add('active');
+            phaseIndicator.classList.add('active');
+            statsContainer.classList.remove('active');
+            downloadBtn.classList.remove('active');
+            status.style.display = 'none';
+            
+            updatePhase(1);
+            updateProgress(5, 'Conectando con servidor...');
+            
+            sessionId = generateSessionId();
+            console.log('Session ID generado:', sessionId);
+            
+            websocket = new WebSocket(`${WS_URL}/ws/${sessionId}`);
+            
+            let wsConnected = false;
+            
+            websocket.onopen = () => {
+                console.log('WebSocket conectado con session:', sessionId);
+                wsConnected = true;
+            };
+            
+            websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                console.log('Mensaje WebSocket recibido:', data);
+                handleWebSocketMessage(data);
+            };
+            
+            websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+            websocket.onclose = () => {
+                console.log('WebSocket cerrado');
+            };
+            
+            const wsReady = await new Promise((resolve) => {
+                let attempts = 0;
+                const maxAttempts = 50;
+                
+                const checkConnection = setInterval(() => {
+                    attempts++;
+                    
+                    if (websocket && websocket.readyState === WebSocket.OPEN) {
+                        clearInterval(checkConnection);
+                        console.log('WebSocket listo para usar');
+                        resolve(true);
+                    } else if (attempts >= maxAttempts) {
+                        clearInterval(checkConnection);
+                        console.warn('Timeout esperando WebSocket - continuando sin él');
+                        resolve(false);
+                    }
+                }, 100);
+            });
+            
+            if (!wsReady) {
+                console.warn('Procesando sin WebSocket en tiempo real');
+            }
+            
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            
+            try {
+                updateProgress(10, 'Subiendo archivo...');
+                
+                console.log('Enviando petición POST con session:', sessionId);
+                const response = await fetch(`${API_URL}/process?threshold=${threshold.value}&session_id=${sessionId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Error procesando');
+                }
+                
+                updatePhase(4);
+                updateProgress(95, 'Descargando resultado...');
+                
+                const blob = await response.blob();
+                downloadBlob = blob;
+                downloadFilename = `organized_${selectedFile.name.split('.')[0]}.zip`;
+                
+                // Descarga automática
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = downloadFilename;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                updateProgress(100, '¡Completado!');
+                showStatus('✅ ¡Proceso completado! Archivo descargado.', 'success');
+                
+                // Mostrar botón de descarga
+                downloadBtn.classList.add('active');
+                
+            } catch (error) {
+                console.error('Error en procesamiento:', error);
+                showStatus(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                if (websocket) {
+                    setTimeout(() => {
+                        websocket.close();
+                    }, 1000);
+                }
+                setTimeout(resetUI, 2000);
+            }
+        });
+        
+        function showStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
