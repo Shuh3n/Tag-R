@@ -1,0 +1,19 @@
+{
+  "functions": {
+    "app.py": {
+      "runtime": "python3.11"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ],
+  "build": {
+    "env": {
+      "PYTHONPATH": ".",
+      "PIP_CACHE_DIR": "/tmp/.cache/pip"
+    }
+  }
+}
