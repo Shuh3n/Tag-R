@@ -1,0 +1,97 @@
+# TAG-R - Organizador de Fotos con IA
+
+## ¿Qué hace esta aplicación?
+Organiza automáticamente tus fotos por personas usando inteligencia artificial de reconocimiento facial.
+
+## 🚀 INSTALACIÓN Y USO
+
+### PRIMERA VEZ - INSTALACIÓN:
+1. **Ejecuta `INSTALAR_DEPENDENCIAS.bat`** como **ADMINISTRADOR**
+2. Espera que se instalen todas las dependencias (5-15 minutos)
+3. Una vez completado, ya puedes usar la aplicación
+
+### USO NORMAL:
+**Opción 1 (Recomendada):**
+- Ejecuta `TAG-R.exe`
+
+**Opción 2 (Alternativa):**
+- Ejecuta `TAG-R_Launcher.bat`
+
+## 📁 Estructura del archivo ZIP para subir
+
+Tu archivo ZIP debe tener esta estructura:
+
+```
+mi_archivo.zip
+├── known_faces/
+│   ├── Juan/           (2-3 fotos claras de Juan)
+│   ├── Maria/          (2-3 fotos claras de María)
+│   ├── Pedro/          (2-3 fotos claras de Pedro)
+│   └── Ana/            (2-3 fotos claras de Ana)
+└── input_photos/       (todas las fotos que quieres organizar)
+    ├── IMG_001.jpg
+    ├── IMG_002.jpg
+    └── ...
+```
+
+### Consejos para mejores resultados:
+- **known_faces**: Fotos claras del rostro, bien iluminadas, frontales
+- **input_photos**: Cualquier foto que contenga personas
+- Formatos soportados: JPG, JPEG, PNG
+- Cada persona en known_faces debe tener al menos 2-3 fotos
+
+## 🔧 REQUISITOS DEL SISTEMA
+
+- **Sistema:** Windows 10/11
+- **RAM:** 4GB mínimo, 8GB recomendado
+- **Espacio:** 2GB libres para dependencias
+- **Python:** 3.8 o superior
+- **Internet:** Necesario para instalar dependencias
+
+## 🆘 SOLUCIÓN DE PROBLEMAS
+
+### "Python no encontrado":
+1. Instala Python desde https://python.org
+2. Durante la instalación marca "Add Python to PATH"
+3. Reinicia el sistema
+4. Vuelve a ejecutar el instalador
+
+### "Error instalando dependencias":
+1. Ejecuta como **Administrador**
+2. Verifica conexión a Internet
+3. Desactiva temporalmente el antivirus
+4. Si persiste, ejecuta manualmente:
+   ```cmd
+   python -m pip install --upgrade pip
+   python -m pip install -r requirements.txt
+   ```
+
+### "El ejecutable no funciona":
+- Usa `TAG-R_Launcher.bat` como alternativa
+- Asegúrate de que todos los archivos estén en la misma carpeta
+
+### "Procesamiento muy lento":
+- Cierra otros programas para liberar RAM
+- Reduce el tamaño de las imágenes antes de procesar
+- Usa fotos de buena calidad pero no excesivamente grandes
+
+## 📊 INTERPRETACIÓN DE RESULTADOS
+
+La aplicación organizará tus fotos en carpetas:
+
+- **[Nombre de persona]**: Fotos identificadas de esa persona
+- **desconocidos**: Personas detectadas pero no reconocidas
+- **sin_rostros**: Fotos donde no se detectó ningún rostro
+
+## 🔒 PRIVACIDAD
+
+- Todo el procesamiento se hace **localmente** en tu PC
+- No se envían datos a servidores externos
+- Las fotos no salen de tu computadora
+
+## 📝 NOTAS DE LA VERSIÓN
+
+**Versión:** 1.0
+**Última actualización:** Noviembre 2024
+
+Para soporte técnico o reportar problemas, contacta al desarrollador.
