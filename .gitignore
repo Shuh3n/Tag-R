@@ -14,6 +14,7 @@ venv_face/
 ENV/
 env/
 .venv
+.tagR-face/
 
 # IDE
 .vscode/
@@ -26,4 +27,8 @@ env/
 
 # OS
 .DS_Store
-Thumbs.db
+Thumbs.dbtemp_processing/
+output_organized/
+*.zip
+__pycache__/
+*.pyc
