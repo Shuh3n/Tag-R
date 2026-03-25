@@ -523,8 +523,12 @@
     </div>
     
     <script>
-        const API_URL = 'http://localhost:8000';
-        const WS_URL = 'ws://localhost:8000';
+        const HOST = window.location.host; // Incluye el puerto si existe
+        const PROTOCOL = window.location.protocol;
+        const WS_PROTOCOL = PROTOCOL === 'https:' ? 'wss:' : 'ws:';
+        
+        const API_URL = `${PROTOCOL}//${HOST}`;
+        const WS_URL = `${WS_PROTOCOL}//${HOST}`;
         
         const dragOverlay = document.getElementById('dragOverlay');
         const uploadArea = document.getElementById('uploadArea');

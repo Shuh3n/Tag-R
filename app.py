@@ -31,12 +31,18 @@ app.add_middleware(
     allow_credentials=True,
 )
 
-# Serve UI (place your index.html in ./static/index.html)
+# Serve UI (place your index.html in the current directory or ./static)
 BASE = Path(".").resolve()
 STATIC_DIR = BASE / "static"
+IMAGES_DIR = BASE / "images"
+
 if not STATIC_DIR.exists():
     STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
+# Mount /static and /images
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+if IMAGES_DIR.exists():
+    app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
 
 # TEMP dir
 TEMP_DIR = BASE / "temp_processing"
@@ -271,9 +277,14 @@ async def process_photos(work_dir: Path, threshold: float, session_id: str):
 # Routes
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    index_path = STATIC_DIR / "index.html"
-    if index_path.exists():
-        return HTMLResponse(index_path.read_text(encoding="utf-8"))
+    # Primero buscamos en root, luego en static
+    index_root = BASE / "index.html"
+    index_static = STATIC_DIR / "index.html"
+    
+    if index_root.exists():
+        return HTMLResponse(index_root.read_text(encoding="utf-8"))
+    elif index_static.exists():
+        return HTMLResponse(index_static.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>TAG-R</h1><p>index.html no encontrado</p>", status_code=404)
 
 @app.websocket("/ws/{session_id}")
