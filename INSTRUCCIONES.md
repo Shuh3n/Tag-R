@@ -4,22 +4,22 @@
 
 ## 🛠️ Paso 1: Instalación (Solo la primera vez)
 
-Antes de usar el programa, debes instalar las dependencias necesarias. Esto configurará un entorno virtual aislado para evitar problemas con otras versiones de Python.
+Antes de usar el programa, debes realizar una configuración inicial automática. Este paso instalará Python si no lo tienes, creará un entorno seguro y generará el lanzador personalizado.
 
-1.  Asegúrate de tener **Python 3.10 o 3.11** instalado.
-2.  Ejecuta el archivo **`Instalar_Dependencias.bat`**.
-3.  Espera a que termine (puede tardar de 5 a 15 minutos dependiendo de tu conexión a internet).
+1.  Ejecuta el archivo **`Instalar_Dependencias.bat`**.
+2.  Si el script instala Python, te pedirá cerrarlo y volverlo a ejecutar una vez más.
+3.  Espera a que termine (puede tardar de 5 a 15 minutos). Al finalizar, verás en la carpeta un archivo llamado **`TAG-R.exe`** con el logo oficial.
 
 ## 🏃 Paso 2: Ejecución
 
-Tienes varias formas de iniciar la aplicación:
+Tienes dos formas de iniciar la aplicación:
 
-### Opción A (Recomendada): Lanzador Rápido
-*   Ejecuta **`Lanzar_Rapido.bat`**. 
-*   Esto abrirá una consola con los logs del servidor y, automáticamente, se abrirá tu navegador en `http://localhost:8000`.
+### Opción A (Recomendada): Ejecutable con Logo
+*   Haz doble clic en el archivo **`TAG-R.exe`** que se acaba de generar.
+*   Esto abrirá el motor de IA y lanzará automáticamente tu navegador en `http://localhost:8000`.
 
-### Opción B: Ejecutable (Portable)
-*   Si ya generaste el archivo **`TAG-R.exe`** (usando `Generar_EXE_Lanzador.bat`), simplemente haz doble clic en él.
+### Opción B: Lanzador Alternativo
+*   Si prefieres usar el script directo, ejecuta **`Lanzar_Rapido.bat`**.
 
 ## 📁 Cómo organizar tus fotos
 
