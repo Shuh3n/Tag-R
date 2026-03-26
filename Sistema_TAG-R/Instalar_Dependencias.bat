@@ -19,30 +19,41 @@ echo ================================================================
 echo.
 
 REM 1. Verificar e instalar Python
-echo [1/4] Verificando instalacion de Python...
-python --version >nul 2>&1
-if %errorlevel% equ 0 goto python_ok
+echo [1/4] Verificando instalacion de Python 3.11...
 
-echo [AVISO] Python no detectado en el sistema. 
+set PYTHON_EXE=
+py -3.11 --version >nul 2>&1
+if errorlevel 1 goto check_python_path
+set PYTHON_EXE=py -3.11
+goto python_ok
+
+:check_python_path
+python --version 2>&1 | findstr /R /C:"Python 3\.11" >nul
+if errorlevel 1 goto need_install
+set PYTHON_EXE=python
+goto python_ok
+
+:need_install
+echo [AVISO] Python 3.11 no detectado en el sistema (o tienes otra version incompatible). 
 echo Intentando instalacion automatica de Python 3.11...
 
 winget --version >nul 2>&1
-if %errorlevel% neq 0 goto winget_fail
+if errorlevel 1 goto winget_fail
 
 echo [INFO] Instalando Python 3.11 via Winget (gestor oficial de Microsoft)...
 echo Espera a que termine, esto puede tardar unos minutos...
 
 winget install --id Python.Python.3.11 --source winget --silent --accept-package-agreements --accept-source-agreements
 
-if %errorlevel% neq 0 goto winget_install_fail
+if errorlevel 1 goto winget_install_fail
 
 echo.
 echo [OK] Python 3.11 se ha instalado satisfactoriamente.
 echo.
 echo ================================================================
 echo [IMPORTANTE] DEBES REINICIAR EL INSTALADOR
-echo Para que Windows reconozca el nuevo comando, cierra esta ventana
-echo y vuelve a abrir 'Instalar_Dependencias.bat'.
+echo Para que Windows reconozca el nuevo comando de Python 3.11, 
+echo cierra esta ventana y vuelve a abrir el instalador.
 echo ================================================================
 echo.
 pause
@@ -50,18 +61,18 @@ exit /b 0
 
 :winget_install_fail
 echo [ERROR] La instalacion automatica fallo.
-echo Por favor, instalalo manualmente desde: https://www.python.org/
+echo Por favor, instalalo manualmente desde: https://www.python.org/downloads/release/python-3119/
 pause
 exit /b 1
 
 :winget_fail
 echo [ERROR] Winget no disponible. Instala Python 3.11 manualmente.
-echo Asegurate de marcar la casilla "Add Python to PATH" al instalar.
+echo Asegurate de descargar la version 3.11.x y marcar "Add Python to PATH" al instalar.
 pause
 exit /b 1
 
 :python_ok
-echo [OK] Python detectado.
+echo [OK] Python 3.11 detectado correctamente.
 
 echo.
 
@@ -69,7 +80,7 @@ REM 2. Crear Entorno Virtual
 echo [2/4] Creando entorno virtual (.venv)...
 if exist ".venv" goto venv_exists
 
-python -m venv .venv
+%PYTHON_EXE% -m venv .venv
 if errorlevel 1 goto venv_error
 
 echo [OK] Entorno virtual creado.
