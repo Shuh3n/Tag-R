@@ -5,8 +5,8 @@ title TAG-R - Generador de Lanzador EXE
 :: --- ELEVACIÓN DE PRIVILEGIOS ---
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo [INFO] Solicitando permisos de administrador...
-    powershell -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+    echo [INFO] Solicitando administrador...
+    powershell -Command "Start-Process cmd -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
     exit /b
 )
 cd /d "%~dp0"

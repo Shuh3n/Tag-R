@@ -31,13 +31,34 @@ app.add_middleware(
     allow_credentials=True,
 )
 
-# Serve UI (place your index.html in the current directory or ./static)
-BASE = Path(__file__).parent.resolve()
+# Define current working directory as base
+import sys
+if getattr(sys, 'frozen', False):
+    # Si somos el EXE, nuestra base puede ser el CWD o la carpeta superior de "dist"
+    exe_path = Path(sys.executable)
+    if exe_path.parent.name.lower() == "dist":
+        BASE = exe_path.parent.parent.resolve()
+    else:
+        BASE = exe_path.parent.resolve()
+else:
+    BASE = Path(__file__).parent.resolve()
+
+# Fallback: siempre buscar también en el directorio de trabajo (cwd)
+CWD = Path.cwd()
+
 STATIC_DIR = BASE / "static"
 IMAGES_DIR = BASE / "images"
 
+# Crear si no existe en cwd (solo para que no crashee en modo puro)
 if not STATIC_DIR.exists():
-    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    if (CWD / "static").exists():
+        STATIC_DIR = CWD / "static"
+    else:
+        STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
+if not IMAGES_DIR.exists():
+    if (CWD / "images").exists():
+        IMAGES_DIR = CWD / "images"
 
 # Mount /static and /images
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
@@ -47,6 +68,7 @@ if IMAGES_DIR.exists():
 # TEMP dir
 TEMP_DIR = BASE / "temp_processing"
 TEMP_DIR.mkdir(exist_ok=True)
+
 
 # Lazy init model
 _face_app = None
@@ -277,15 +299,19 @@ async def process_photos(work_dir: Path, threshold: float, session_id: str):
 # Routes
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    # Primero buscamos en root, luego en static
-    index_root = BASE / "index.html"
-    index_static = STATIC_DIR / "index.html"
+    # Primero buscamos en BASE y luego iteramos fallbacks
+    fallbacks = [
+        BASE / "index.html",
+        STATIC_DIR / "index.html",
+        Path.cwd() / "index.html",
+        Path.cwd() / "Sistema_TAG-R" / "index.html"
+    ]
     
-    if index_root.exists():
-        return HTMLResponse(index_root.read_text(encoding="utf-8"))
-    elif index_static.exists():
-        return HTMLResponse(index_static.read_text(encoding="utf-8"))
-    return HTMLResponse("<h1>TAG-R</h1><p>index.html no encontrado</p>", status_code=404)
+    for opt in fallbacks:
+        if opt.exists():
+            return HTMLResponse(opt.read_text(encoding="utf-8"))
+            
+    return HTMLResponse(f"<h1>TAG-R</h1><p>index.html no encontrado. Rutas probadas:<br>{'<br>'.join(str(p) for p in fallbacks)}</p>", status_code=404)
 
 @app.websocket("/ws/{session_id}")
 async def websocket_endpoint(ws: WebSocket, session_id: str):
