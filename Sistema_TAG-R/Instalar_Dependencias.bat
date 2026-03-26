@@ -101,6 +101,12 @@ REM 3. Instalar dependencias
 echo [3/4] Instalando dependencias (esto puede tardar unos minutos)...
 call .venv\Scripts\activate
 python -m pip install --upgrade pip
+
+echo [INFO] Descargando compilacion especial de InsightFace para Windows...
+echo Esto prevendra el error de "Building wheel"...
+python -m pip install https://github.com/Gourieff/sd-webui-reactor/releases/download/v1.1.2/insightface-0.7.3-cp311-cp311-win_amd64.whl
+
+echo [INFO] Instalando el resto de requerimientos...
 python -m pip install -r requirements.txt --prefer-binary
 
 if errorlevel 1 goto install_warning
@@ -108,9 +114,8 @@ goto deps_ok
 
 :install_warning
 echo.
-echo [WARNING] Hubo un error instalando algunas dependencias.
-echo Intentando instalacion alternativa para InsightFace...
-python -m pip install onnxruntime==1.16.3 insightface==0.7.3 numpy==1.24.3 --prefer-binary
+echo [WARNING] Cierto módulo reportó problemas, forzando instalación secundaria...
+python -m pip install onnxruntime==1.16.3 numpy==1.24.3 --prefer-binary
 
 if errorlevel 1 goto install_error
 goto deps_ok
