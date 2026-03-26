@@ -9,8 +9,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from tqdm import tqdm
 
 # Configuración
-KNOWN_FACES_DIR = "known_faces"
-INPUT_DIR = "input_photos"
+KNOWN_FACES_DIR = "Faces"
+INPUT_DIR = "Photos"
 OUTPUT_DIR = "output_organized"
 SIMILARITY_THRESHOLD = 0.4  # menor = más estricto
 

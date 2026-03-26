@@ -201,14 +201,14 @@ def find_best_match(embedding, known_persons: dict, threshold=0.4):
     return best_match
 
 async def process_photos(work_dir: Path, threshold: float, session_id: str):
-    known_dir = work_dir / "known_faces"
-    input_dir = work_dir / "input_photos"
+    known_dir = work_dir / "Faces"
+    input_dir = work_dir / "Photos"
     output_dir = work_dir / "organized"
 
     if not known_dir.exists():
-        raise ValueError("Falta carpeta: known_faces")
+        raise ValueError("Falta carpeta: Faces")
     if not input_dir.exists():
-        raise ValueError("Falta carpeta: input_photos")
+        raise ValueError("Falta carpeta: Photos")
 
     output_dir.mkdir(exist_ok=True)
 
@@ -230,14 +230,14 @@ async def process_photos(work_dir: Path, threshold: float, session_id: str):
         gc.collect()
 
     if not known_persons:
-        raise ValueError("No se encontraron rostros en known_faces")
+        raise ValueError("No se encontraron rostros en Faces")
 
     await manager.send(session_id, {"type": "status", "message": f"✅ {len(known_persons)} personas cargadas"})
 
     photos = [p for p in input_dir.rglob("*") if p.suffix.lower() in {".jpg", ".jpeg", ".png", ".bmp"}]
     total = len(photos)
     if total == 0:
-        raise ValueError("No hay fotos en input_photos")
+        raise ValueError("No hay fotos en Photos")
 
     await manager.send(session_id, {"type": "total_photos", "total": total})
 
@@ -328,10 +328,10 @@ async def process_endpoint(file: UploadFile = File(...), threshold: float = 0.4,
             z.extractall(work_dir)
         await manager.send(session_id, {"type": "status", "message": "✓ Archivo extraído"})
 
-        if not (work_dir / "known_faces").exists():
-            raise HTTPException(400, "Falta carpeta 'known_faces'")
-        if not (work_dir / "input_photos").exists():
-            raise HTTPException(400, "Falta carpeta 'input_photos'")
+        if not (work_dir / "Faces").exists():
+            raise HTTPException(400, "Falta carpeta 'Faces'")
+        if not (work_dir / "Photos").exists():
+            raise HTTPException(400, "Falta carpeta 'Photos'")
 
         # Inicializar modelo temprano para detectar errores y notificar por WS
         try:

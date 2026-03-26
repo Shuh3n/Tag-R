@@ -4,8 +4,8 @@ title TAG-R - Instalación de Dependencias
 cd /d "%~dp0"
 
 echo ================================================================
-2: echo           TAG-R - INSTALADOR DE DEPENDENCIAS
-3: echo ================================================================
+echo           TAG-R - INSTALADOR DE DEPENDENCIAS
+echo ================================================================
 echo.
 
 REM 1. Verificar Python

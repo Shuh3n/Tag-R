@@ -27,10 +27,10 @@ Para que la IA funcione correctamente, debes subir un archivo **ZIP** con la sig
 
 ```text
 mi_archivo.zip
-├── known_faces/            <-- Fotos de referencia
+├── Faces/                  <-- Fotos de referencia
 │   ├── Juan/               (2-3 fotos claras de la cara de Juan)
 │   └── Maria/              (2-3 fotos claras de la cara de Maria)
-└── input_photos/           <-- Fotos que quieres organizar
+└── Photos/                 <-- Fotos que quieres organizar
     ├── Foto_Cumple.jpg
     ├── Vacaciones.png
     └── ...

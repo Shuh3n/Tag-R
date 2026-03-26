@@ -23,22 +23,22 @@ Tu archivo ZIP debe tener esta estructura:
 
 ```
 mi_archivo.zip
-├── known_faces/
+├── Faces/
 │   ├── Juan/           (2-3 fotos claras de Juan)
 │   ├── Maria/          (2-3 fotos claras de María)
 │   ├── Pedro/          (2-3 fotos claras de Pedro)
 │   └── Ana/            (2-3 fotos claras de Ana)
-└── input_photos/       (todas las fotos que quieres organizar)
+└── Photos/             (todas las fotos que quieres organizar)
     ├── IMG_001.jpg
     ├── IMG_002.jpg
     └── ...
 ```
 
 ### Consejos para mejores resultados:
-- **known_faces**: Fotos claras del rostro, bien iluminadas, frontales
-- **input_photos**: Cualquier foto que contenga personas
+- **Faces**: Fotos claras del rostro, bien iluminadas, frontales
+- **Photos**: Cualquier foto que contenga personas
 - Formatos soportados: JPG, JPEG, PNG
-- Cada persona en known_faces debe tener al menos 2-3 fotos
+- Cada persona en Faces debe tener al menos 2-3 fotos
 
 ## 🔧 REQUISITOS DEL SISTEMA
 

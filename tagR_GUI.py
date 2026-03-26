@@ -73,8 +73,8 @@ class FaceOrganizerGUI:
         self.root.configure(bg="#f5f6fa")
         
         # Variables
-        self.known_faces_dir = tk.StringVar(value="known_faces")
-        self.input_dir = tk.StringVar()
+        self.known_faces_dir = tk.StringVar(value="Faces")
+        self.input_dir = tk.StringVar(value="Photos")
         self.output_dir = tk.StringVar(value="output_organized")
         self.tolerance = tk.DoubleVar(value=0.4)  # threshold para insightface
         self.is_processing = False
@@ -117,7 +117,7 @@ class FaceOrganizerGUI:
         
         # Grid para carpetas
         for i, (label_text, var, btn_text) in enumerate([
-            ("Personas conocidas", self.known_faces_dir, "Cambiar"),
+            ("Caras de referencia", self.known_faces_dir, "Cambiar"),
             ("Fotos a organizar", self.input_dir, "Seleccionar"),
             ("Carpeta de salida", self.output_dir, "Cambiar")
         ]):
