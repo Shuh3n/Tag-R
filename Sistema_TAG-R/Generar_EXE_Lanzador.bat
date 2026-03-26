@@ -1,7 +1,17 @@
 @echo off
 setlocal
 title TAG-R - Generador de Lanzador EXE
+
+:: --- ELEVACIÓN DE PRIVILEGIOS ---
+net session >nul 2>&1
+if %errorLevel% neq 0 (
+    echo [INFO] Solicitando permisos de administrador...
+    powershell -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
+    exit /b
+)
 cd /d "%~dp0"
+:: -------------------------------
+
 
 echo ================================================================
 echo           TAG-R - GENERADOR DE LANZADOR .EXE
