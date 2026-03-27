@@ -1,57 +1,74 @@
 @echo off
-setlocal
-title TAG-R - Acceso Rapido
+setlocal enabledelayedexpansion
+title TAG-R - Lanzador
 
-:: --- ELEVACIÓN DE PRIVILEGIOS ---
+:: =================================================================
+:: ELEVACION DE PRIVILEGIOS (metodo robusto con rutas con espacios)
+:: =================================================================
 net session >nul 2>&1
 if %errorLevel% neq 0 (
-    echo [INFO] Solicitando administrador...
-    powershell -Command "Start-Process cmd -ArgumentList '/c \"\"%~f0\"\"' -Verb RunAs"
-    exit /b
+    echo [INFO] Solicitando permisos de administrador...
+    powershell -NoProfile -Command "Start-Process -FilePath 'cmd.exe' -ArgumentList '/k \"%~s0\"' -Verb RunAs"
+    exit /b 0
 )
 cd /d "%~dp0"
-:: -------------------------------
+:: =================================================================
 
 
+cls
 echo ================================================================
 echo           TAG-R - LANZADOR DE APLICACION
 echo ================================================================
 echo.
 
-REM Verificar si existe el ejecutable compilado
-if not exist "Sistema_TAG-R\dist\TAG-R.exe" goto try_script
-
-echo [INFO] Iniciando version optimizada (EXE)...
-cd Sistema_TAG-R
-"dist\TAG-R.exe"
-
-if errorlevel 1 (
-    echo.
-    echo [ERROR] La aplicacion (EXE) se ha cerrado con errores.
-    pause
-    exit /b 1
+REM --- Verificar que la carpeta Sistema_TAG-R existe ---
+if not exist "Sistema_TAG-R" (
+    echo [ERROR] No se encontro la carpeta 'Sistema_TAG-R'.
+    echo Asegurate de que los archivos esten descomprimidos correctamente.
+    goto error_fatal
 )
-echo [OK] Aplicacion finalizada.
-exit /b 0
 
-:try_script
-REM Si no hay EXE, intentar lanzar via Python
-if not exist "Sistema_TAG-R\Lanzar_Rapido.bat" goto no_system
-
-echo [INFO] Iniciando via Script...
-cd Sistema_TAG-R
-call "Lanzar_Rapido.bat"
-
-if errorlevel 1 (
-    echo.
-    echo [ERROR] Hubo un problema al ejecutar el script.
+REM --- Opcion 1: EXE compilado (mas rapido) ---
+if exist "Sistema_TAG-R\dist\TAG-R.exe" (
+    echo [INFO] Iniciando version optimizada (EXE)...
+    cd /d "%~dp0Sistema_TAG-R"
+    "dist\TAG-R.exe"
+    set EXIT_CODE=!errorlevel!
+    cd /d "%~dp0"
+    if !EXIT_CODE! neq 0 (
+        echo.
+        echo [ERROR] La aplicacion EXE se cerro con errores (codigo: !EXIT_CODE!).
+        goto error_fatal
+    )
+    echo [OK] Aplicacion finalizada correctamente.
     pause
-    exit /b 1
+    exit /b 0
 )
-exit /b 0
 
-:no_system
-echo [ERROR] No se encontro el sistema de TAG-R. 
-echo Asegurate de que la carpeta 'Sistema_TAG-R' exista.
+REM --- Opcion 2: Via script Python ---
+if exist "Sistema_TAG-R\Lanzar_Rapido.bat" (
+    echo [INFO] Iniciando via Script Python...
+    cd /d "%~dp0Sistema_TAG-R"
+    call "Lanzar_Rapido.bat"
+    set EXIT_CODE=!errorlevel!
+    cd /d "%~dp0"
+    if !EXIT_CODE! neq 0 (
+        echo [ERROR] El script de lanzamiento fallo.
+        goto error_fatal
+    )
+    exit /b 0
+)
+
+REM --- No se encontro ninguna forma de lanzar ---
+echo [ERROR] No se encontro TAG-R.exe ni Lanzar_Rapido.bat.
+echo Ejecuta primero 'Instalar_TAG-R.bat' para configurar el sistema.
+
+:error_fatal
+echo.
+echo ================================================================
+echo  [FATAL] No se pudo iniciar TAG-R.
+echo  Ejecuta 'Instalar_TAG-R.bat' para reparar la instalacion.
+echo ================================================================
+echo.
 pause
 exit /b 1
